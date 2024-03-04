@@ -1,20 +1,24 @@
-FROM openjdk:8-jre-slim
+# Stage 1: Build Stage
+FROM python:3.9-slim AS build
 
-# Install Python and pip
-RUN apt-get update && \
-    apt-get install -y python3 python3-pip && \
-    apt-get clean
-
-# Install PySpark, Matplotlib, and findspark
-RUN pip3 install pyspark matplotlib findspark sklearn
+# Install any necessary build dependencies here if needed
 
 # Set working directory
 WORKDIR /app
 
-# Copy all Python files from the host into the container
-COPY . /app
+# Install dependencies
+RUN pip install --no-cache-dir pyspark matplotlib findspark scikit-learn pandas
 
-FROM python:3
+# Install necessary runtime dependencies
+RUN apt-get update && apt-get install -y default-jre-headless && \
+    apt-get clean
+
+# Set working directory
+WORKDIR /app
+
+# Copy installed dependencies from the build stage
+COPY --from=build /usr/local/lib/python3.9/site-packages/ /usr/local/lib/python3.9/site-packages/
+COPY . /app
 
 # CMD to run the Python script
 CMD ["python", "main.py"]
